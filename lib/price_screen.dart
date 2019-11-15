@@ -1,3 +1,4 @@
+import 'package:bitcoin_ticker/cryptoCard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'coin_data.dart';
@@ -52,16 +53,19 @@ class _PriceScreenState extends State<PriceScreen> {
     );
   }
 
-  String value = '?';
+  Map<String, String> coinValues = {};
+  bool isWaiting = false;
 
   //TODO 7: Figure out a way of displaying a '?' on screen while we're waiting for the price data to come back. Hint: You'll need a ternary operator.
 
   //TODO 6: Update this method to receive a Map containing the crypto:price key value pairs. Then use that map to update the CryptoCards.
   void getData() async {
+    isWaiting = true;
     try {
-      double data = await CoinData().getCoinData(selectedCurrency);
+      var data = await CoinData().getCoinData(selectedCurrency);
+      isWaiting = false;
       setState(() {
-        value = data.toStringAsFixed(0);
+        coinValues = data;
       });
     } catch (e) {
       print(e);
@@ -76,6 +80,18 @@ class _PriceScreenState extends State<PriceScreen> {
 
   //TODO: For bonus points, create a method that loops through the cryptoList and generates a CryptoCard for each.
 
+  List<CryptoCard> getCryptoCard() {
+    List<CryptoCard> listCripto = [];
+    for (String crypto in cryptoList) {
+      var item = CryptoCard(
+          crypto: crypto,
+          value: isWaiting ? '?' : coinValues[crypto],
+          selectedCurrency: selectedCurrency);
+      listCripto.add(item);
+    }
+    return listCripto;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,26 +105,8 @@ class _PriceScreenState extends State<PriceScreen> {
           //TODO 1: Refactor this Padding Widget into a separate Stateless Widget called CryptoCard, so we can create 3 of them, one for each cryptocurrency.
           //TODO 2: You'll need to able to pass the selectedCurrency, value and cryptoCurrency to the constructor of this CryptoCard Widget.
           //TODO 3: You'll need to use a Column Widget to contain the three CryptoCards.
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = $value $selectedCurrency',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+          Column(
+            children: getCryptoCard(),
           ),
           Container(
             height: 150.0,
